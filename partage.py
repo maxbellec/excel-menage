@@ -13,20 +13,21 @@ COLUMNS = {
     "penibility": 5,
     "attributed": 7,
     "shift": 8,
+    "hide": 9,
 }
 WEEKS_IN_YEAR = 52
 MAX_ROWS = 100
 ONE_WEEK = datetime.timedelta(days=7)
 ONE_DAY = datetime.timedelta(days=1)
-FIRST_DAY = datetime.datetime(2019, 12, 2) - ONE_WEEK
-LAST_DAY = datetime.datetime(2020, 6, 1)
+FIRST_DAY = datetime.datetime(2021, 4, 14) - ONE_WEEK
+LAST_DAY = datetime.datetime(2021, 12, 31)
 # lookup in `attributed` lowercase string, participant name
 PARTICIPANTS = (
     ('x', 'Maxime'),
     ('o', 'Morgane'),
 )
-WORBOOK_PATH = "Partage du ménage Chouchou et Chouchou.xlsx"
-NAME_STRING = "Semaine du \n{first_day} au \n{last_day}"
+WORBOOK_PATH = "2021 - Partage du ménage Chouchou et Chouchou.xlsx"
+NAME_STRING = "Semaine du \n\nau"
 OUTPUT_SHEET = "Détails"
 OUTPUT_FIRST_ROW = 2
 TASK_FORMAT = "☐ {name} ({time:.0f}min)"
@@ -39,7 +40,7 @@ OUTER_BORDER = Border(top=THIN, bottom=THIN, left=THIN, right=THIN)
 CENTER_ALIGNMENT = Alignment(wrap_text=True, horizontal='center', vertical='center')
 TODO_PARTICIPANT = "à faire {}"
 TASK_CELL_ALIGNMENT = Alignment(horizontal='general', vertical='center', wrap_text=True)
-TASK_ROW_HEIGHT = 190
+TASK_ROW_HEIGHT = 280
 TOP_ROW_HEIGHT = 40
 TASK_COLUMN_WIDTH = 80
 WEEK_COLUMN_WIDTH = 30
@@ -78,14 +79,24 @@ def get_week_number(day):
 
 
 def format_tasks(tasks):
-    return "\n".join(TASK_FORMAT.format(
+    total_time = int(sum(float(task['time']) for task in tasks))
+    total_hours = total_time // 60
+    total_minutes = total_time % 60
+
+    show_total_time = "{} mimutes".format(total_minutes)
+    if total_hours:
+        show_total_time = "{} heures et {}".format(total_hours, show_total_time)
+
+    tasks = "\n".join(TASK_FORMAT.format(
         name=task['name'],
-        time=task['time'],
+        time=float(task['time']),
         penibility=task['penibility'],
     ) for task in tasks)
 
+    return "Temps total : {}\n\n{}".format(show_total_time, tasks)
 
-locale.setlocale(locale.LC_TIME, "fr_FR")
+
+# locale.setlocale(locale.LC_TIME, "fr_FR")
 wb = load_workbook(WORBOOK_PATH)
 ws = wb.active
 tasks_per_week = []
@@ -104,7 +115,7 @@ while day < LAST_DAY:
         row = get_row(ws, row_number)
         if not row or not should_do_task(
             row['year_frequency'], week_number, row['shift']
-        ):
+        ) or row["hide"]:
             continue
 
         for lookup, participant in PARTICIPANTS:
