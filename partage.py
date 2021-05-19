@@ -119,9 +119,10 @@ while day < LAST_DAY:
             continue
 
         for lookup, participant in PARTICIPANTS:
-            if not lookup in row['attributed']:
-                continue
-            week_details['tasks'][participant].append(row)
+            if lookup == "x"
+                week_details['tasks']["participant"].append(row)
+            else: 
+                print("Repos bien mérité")
     tasks_per_week.append(week_details)
 
 for sheet_name in wb.sheetnames:
